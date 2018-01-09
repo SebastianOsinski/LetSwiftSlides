@@ -49,13 +49,14 @@ theme: Next, 1
 ```
 
 ---
-[.build-lists: false]
 ## Modelling API requests with enums
 
 ---
+[.build-lists: false]
 * External library, e.g. Moya
 
 ---
+[.build-lists: false]
 * External library, e.g. Moya
 * Hand made solutions
 
