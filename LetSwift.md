@@ -100,7 +100,7 @@ Changes state, does not return anything
 Returns some data, does not change state
 
 ---
-## First version
+## First version - enums
 
 ```swift
 enum Query {
@@ -109,6 +109,9 @@ enum Query {
     case projects(filters: [String: String])
     case users
     case teams
+    .
+    .
+    .
 
     var path: String {
         switch self {
@@ -118,6 +121,9 @@ enum Query {
             return "users"
         case .teams:
             return "teams"
+        .
+        .
+        .
     }
 
     var urlRequest: URLRequest {
@@ -127,13 +133,16 @@ enum Query {
 ```
 
 ---
-## First version
+## First version - enums
 
 ```swift
 enum Command {
     case saveDraft(title: String, description: String)
     case updateDraft(title: String, description: String, id: String)
     case submitProject(id: String)
+    .
+    .
+    .
 
     var path: String {
         switch self {
@@ -203,7 +212,6 @@ protocol Command {
 }
 
 extension Command {
-
     var urlRequest: URLRequest {
         // generates proper urlRequest using `path`, `method` and `body`
         ...
@@ -223,7 +231,6 @@ protocol Query {
 }
 
 extension Query {
-
     var urlRequest: URLRequest {
         // always GET
         // generates proper urlRequest using `path` and `parameters`
@@ -287,7 +294,6 @@ protocol IdCommand: Command {
 }
 
 extension IdCommand {
-
     var body: JSON {
         return ["id": id]
     }
@@ -327,7 +333,6 @@ protocol BodyCommand: Command {
 }
 
 extension BodyCommand {
-
     var body: JSON {
         return body.json
     }
@@ -364,16 +369,120 @@ struct PersonCommand: BodyCommand {
 
 ---
 
+## Specialized query protocols
+
+```swift
+/// Protocol for queries which return one entity with given id
+protocol IdQuery {
+    var id: String
+}
+
+/// Protocol for queries which should return results in specific order.
+protocol Orderable {
+    var order: OrderType { get }
+}
+
+/// Protocol for queries which are pageable.
+protocol Pageable {
+    var page: String? { get }
+}
+
+```
+
+---
+
+## Specialized query protocols
+
+```swift
+/// Protocol which identifies queries which can return results based on string query
+protocol Searchable {
+    var query: String? { get }
+}
+
+/// Protocol for queries which return items filtered by given parameters
+protocol Filterable {
+    associatedtype Filter: FilterProtocol
+
+    var filter: Filter? { get }
+}
+
+protocol FilterProtocol {
+    var filtersDict: [String: String] { get }
+}
+```
+
+---
+
+```swift
+extension Query where Self: Filterable {
+    var parameters: [String: String]? {
+        return filter?.filtersDict
+    }
+}
+
+extension Query where Self: Filterable, Self: Pageable {
+    var parameters: [String: String]? {
+        var dictionary = filter?.filtersDict ?? [:]
+        if let page = page {
+            dictionary["page"] = page
+        }
+        return dictionary
+    }
+}
+
+extension Query where Self: Filterable, Self: Orderable, Self: Pageable {
+    var parameters: [String: String]? {
+        var dictionary = filter?.filtersDict ?? [:]
+        dictionary["order"] = order.rawValue
+
+        if let cursor = cursor {
+            dictionary["page"] = page
+        }
+        return dictionary
+    }
+}
+```
+
+---
+## Example usage
+
+```swift
+struct SpeakersQuery: Query, Filterable, Pageable {
+    typealias Result = [Speaker]
+
+    static let path = "speakers"
+
+    let filter: SpeakerFilter?
+    let page: String?
+}
+
+
+struct SpeakerFilter: FilterProtocol {
+    let name: String?
+    let numberOfLetSwiftsAttended: Int?
+
+    var filtersDict: [String: String] {
+        // create dict from fields
+        ...
+    }
+}
+
+```
+
+---
 # Pros
-* All request's configuration in one place
-* It's easy to model similar requests
+* All request's configuration in one place - without reading multiple switches
+* It's easy to model similar requests and add new specialized requests
+* Queries can define their return types
+* We were able to extract whole API layer to framework and reused it in other project for the same client
 
 ---
 # Cons
-* Lack of namespacing. It can be added though - nested structs
+* Lack of namespacing.
+Solution: nested structs
 * It's possible to forget to implement extension for given combination of protocols and compiler won't warn us. Solution: unit tests
 * Some code repetition in extensions.
-Solution: extracting building body/parameters dictionaries to static methods
+Solution: extracting building body/parameters dictionaries to static methods or builder
 
 ---
 # THANK YOU!
