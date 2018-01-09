@@ -1,3 +1,5 @@
+build-lists: true
+
 ## From one buzzword to another
 #<br>
 #### Sebastian Osiński
@@ -6,7 +8,7 @@
 # About me
 
 iOS Developer at Tooploox
-![inline 50%](tplx_logo.png)
+![inline 45%](tplx_logo.png)
 
 ---
 ## Usages of enums in Swift
@@ -21,7 +23,6 @@ iOS Developer at Tooploox
         case mac
     }
 ```
-
 ---
 # Algebraic data types
 
@@ -46,8 +47,48 @@ iOS Developer at Tooploox
 ```
 
 ---
-# Real life's a bitch
+[.build-lists: false]
+## Modelling API requests with enums
+
 ---
+* External library, e.g. Moya
+
+---
+* External library, e.g. Moya
+* Hand made solutions
+
+```swift
+// Part of networking code from Let Swift app
+enum NetworkRouter: URLRequestConvertible {
+
+    // MARK: Event
+    case eventsList(Parameters)
+    case eventDetails(Int)
+
+    // MARK: Speakers
+    case speakersList(Parameters)
+    case speakerDetails(Int)
+    case latestSpeakers
+
+    // MARK: Contact
+    case contact(Parameters)
+
+    var method: HTTPMethod {
+        ...
+    }
+
+    var path: String {
+        ...
+    }
+
+    func asURLRequest() throws -> URLRequest {
+        ...
+    }
+}
+```
+
+---
+
 # CQRS
 ## Command Query Responsibility Segregation
 ---
@@ -83,6 +124,9 @@ enum Query {
 }
 ```
 
+---
+## First version
+
 ```swift
 enum Command {
     case saveDraft(title: String, description: String)
@@ -90,6 +134,12 @@ enum Command {
     case submitProject(id: String)
 
     var path: String {
+        switch self {
+            ...
+        }
+    }
+
+    var method: String {
         switch self {
             ...
         }
@@ -108,16 +158,26 @@ enum Command {
 ```
 
 ---
+# Pros
 
-### Looks fine at the beginning, but has one big problem - doesn't scale well
+* All commands / queries are namespaced and easy to find when they need to be used
+* 
+
+---
+# Cons
+
+* To get all info about request, we need to scroll through whole file and visit each `switch`
+* Doesn't scale well - enum grows with each endpoint added
+* Handling similar requests causes `switch`es to grow horizontally
+* You can't (directly) declare return type of Query
 
 ---
 ```swift
 enum CommandMethod: String {
-    case POST
-    case PUT
-    case DELETE
-    case PATCH
+    case post
+    case put
+    case delete
+    case patch
 }
 
 protocol Command {
@@ -155,6 +215,31 @@ extension Query {
 ```
 ---
 ```swift
+typealias CommandSuccessCallback = () -> Void
+typealias FailureCallback = (Error) -> Void
+typealias QuerySuccessCallback<Entity> = (Entity) -> Void
+
+class ApiClient {
+
+    private let session = URLSession.shared
+
+    func perform(_ command: Command, success: CommandSuccessCallback?, failure: FailureCallback?) {
+        let task = session.dataTask(with: command.urlRequest) { (_, response, error) in
+            if (response as! HTTPURLResponse).statusCode == 200 {
+                success?()
+            } else {
+                failure?(error!)
+            }
+        }
+    }
+
+    func send(_ query: Query)
+}
+
+```
+
+---
+```swift
 protocol IdCommand: Command {
     var id: String { get }
 
@@ -176,7 +261,7 @@ extension IdCommand {
 struct LikePostCommand: IdCommand {
 
     static let path = "like"
-    static let method = .POST
+    static let method = .post
 
     let id: String
 }
