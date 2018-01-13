@@ -76,6 +76,16 @@ enum NetworkRouter: URLRequestConvertible {
     // MARK: Contact
     case contact(Parameters)
 
+```
+
+---
+
+```swift
+
+
+
+
+
     var method: HTTPMethod {
         ...
     }
@@ -109,10 +119,18 @@ enum Query {
     case project(id: String)
     case projects(filters: [String: String])
     case users
+    case user(id: String)
     case teams
+    case team(id: String)
     .
     .
     .
+
+```
+
+---
+
+```swift
 
     var path: String {
         switch self {
@@ -127,6 +145,10 @@ enum Query {
         .
     }
 
+    var parameters: [String: String]? {
+        ...
+    }
+
     var urlRequest: URLRequest {
         ...
     }
@@ -138,12 +160,19 @@ enum Query {
 
 ```swift
 enum Command {
-    case saveDraft(title: String, description: String)
-    case updateDraft(title: String, description: String, id: String)
+    case saveDraft(id: String, title: String, description: String)
+    case updateDraft(id: String, title: String, description: String)
     case submitProject(id: String)
+    case approveProject(id: String)
+    case rejectProject(id: String)
     .
     .
     .
+```
+
+---
+
+```swift
 
     var path: String {
         switch self {
@@ -182,7 +211,7 @@ enum Command {
 * To get all info about request, we need to scroll through whole file and visit each `switch`
 * Doesn't scale well - enum grows with each endpoint added
 * Handling similar requests causes `switch`es to grow horizontally
-* You can't (directly) declare return type of Query
+* You can't declare return type of Query
 
 ---
 ## Protocol oriented approach
@@ -198,16 +227,9 @@ enum Command {
 ## Base protocols: Command
 
 ```swift
-enum CommandMethod: String {
-    case post
-    case put
-    case delete
-    case patch
-}
-
 protocol Command {
     static var path: String { get }
-    static var method: CommandMethod { get }
+    static var method: CommandMethod { get } // .post, .put, .delete, .patch
 
     var body: JSON { get } // typealias JSON = [String: Any]
 }
@@ -218,6 +240,7 @@ extension Command {
         ...
     }
 }
+
 ```
 ---
 ## Base protocols: Query
@@ -225,7 +248,6 @@ extension Command {
 ```swift
 protocol Query {
     associatedtype Result: Decodable
-
     static var path: String { get }
 
     var parameters: [String: String]? { get }
@@ -250,7 +272,9 @@ class ApiClient {
     private let session = URLSession.shared
     private let jsonDecoder = JSONDecoder()
 
-    func execute(_ command: Command, success: CommandSuccessCallback?, failure: FailureCallback?) {
+    func execute(_ command: Command, 
+                   success: CommandSuccessCallback?, 
+                   failure: FailureCallback?) {
         let task = session.dataTask(with: command.urlRequest) { (_, response, error) in
             if 200...299 ~= (response as! HTTPURLResponse).statusCode {
                 success?()
@@ -263,8 +287,14 @@ class ApiClient {
 
         task.resume()
     }
+```
 
-    func execute<Q: Query, Result>(_ query: Q, success: QuerySuccessCallback<Result>?, failure: FailureCallback?) where Result == Q.Result {
+---
+
+```swift
+    func execute<Q: Query, Result>(_ query: Q, 
+                                   success: QuerySuccessCallback<Result>?, 
+                                   failure: FailureCallback?) where Result == Q.Result {
         let task = session.dataTask(with: query.urlRequest) { [jsonDecoder] (data, response, error) in
             if let error = error {
                 failure?(error)
@@ -313,9 +343,11 @@ struct LikeVideoCommand: IdCommand {
     let id: String
 }
 
-apiClient.execute(LikeVideoCommand(id: "let_swift_13_speaker_1_intro"), success: {
-    print("👏 🎉 👍")
-}, failure: nil)
+apiClient.execute(
+    LikeVideoCommand(id: "let_swift_13_speaker_1_intro"), 
+    success: { print("👏 🎉 👍") }, 
+    failure: { print("😢") }
+)
 ```
 
 ---
@@ -342,10 +374,10 @@ extension BodyCommand {
 
 ---
 
-## Usage - command for adding new person
+## Usage - command for adding new speaker
 
 ```swift
-struct PersonCommandBody: CommandBody {
+struct AddSpeakerCommandBody: CommandBody {
     
     let id: String
     let firstName: String
@@ -357,13 +389,19 @@ struct PersonCommandBody: CommandBody {
         ...
     }
 }
+```
 
-struct PersonCommand: BodyCommand {
+---
 
-    static let path = "add_person"
+## Usage - command for adding new speaker
+
+```swift
+struct AddSpeakerCommand: BodyCommand {
+
+    static let path = "add_speaker"
     static let method = .post
 
-    let body: PersonCommandBody
+    let body: AddSpeakerCommandBody
 }
 
 ```
@@ -415,13 +453,25 @@ protocol FilterProtocol {
 ---
 
 ```swift
+
+
+
+
+
 extension Query where Self: Filterable {
     var parameters: [String: String]? {
         return filter?.filtersDict
     }
 }
+```
 
-extension Query where Self: Filterable, Self: Pageable {
+---
+
+```swift
+
+
+
+extension Query where Self: Filterable & Pageable {
     var parameters: [String: String]? {
         var dictionary = filter?.filtersDict ?? [:]
         if let page = page {
@@ -430,8 +480,15 @@ extension Query where Self: Filterable, Self: Pageable {
         return dictionary
     }
 }
+```
 
-extension Query where Self: Filterable, Self: Orderable, Self: Pageable {
+---
+
+```swift
+
+
+
+extension Query where Self: Filterable & Orderable & Pageable {
     var parameters: [String: String]? {
         var dictionary = filter?.filtersDict ?? [:]
         dictionary["order"] = order.rawValue
@@ -456,6 +513,12 @@ struct SpeakersQuery: Query, Filterable, Pageable {
     let filter: SpeakerFilter?
     let page: String?
 }
+```
+
+---
+
+```swift
+
 
 
 struct SpeakerFilter: FilterProtocol {
@@ -467,6 +530,21 @@ struct SpeakerFilter: FilterProtocol {
         ...
     }
 }
+```
+
+---
+
+```swift
+let filter = SpeakerFilter(
+    name: "Sebastian", 
+    numberOfLetSwiftsAttended: 13
+)
+
+apiClient.fetch(
+    SpeakersQuery(filter: filter, page: "start"),
+    success: { speakers in print(speakers) },
+    failure: nil    
+)
 
 ```
 
