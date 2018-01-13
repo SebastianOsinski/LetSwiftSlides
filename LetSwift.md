@@ -13,6 +13,9 @@ theme: Next, 1
 ![inline 43%](tplx_logo.png)
 
 ---
+## So... what's with the title?
+
+---
 ## Usages of enums in Swift
 
 ---
@@ -212,6 +215,56 @@ enum Command {
 * Doesn't scale well - enum grows with each endpoint added
 * Handling similar requests causes `switch`es to grow horizontally
 * You can't declare return type of Query
+
+---
+[.build-lists: false]
+* To get all info about request, we need to scroll through whole file and visit each `switch`
+
+```swift, [.highlight: 4, 13, 20]
+    var path: String {
+        switch self {
+        case approveProject:
+            return "approveProject"
+        case createProject:
+            return "createProject":
+        }
+    }
+
+    var method: String {
+        switch self {
+        case approveProject, createProject:
+            return "POST"
+        }
+    }
+
+    var body: String {
+        switch self {
+        case approveProject(let id):
+            return ["id": id]
+        case createProject(let id, let content):
+            return ["id": id, "content": content]
+        }
+    }
+
+```
+
+---
+[.build-lists: false]
+* Handling similar requests causes `switch`es to grow horizontally
+
+```swift, [.highlight: 5]
+
+
+
+    var body: String {
+        switch self {
+        case approveProject(let id), rejectProject(let id), removeProject(let id):
+            return ["id": id]
+        ...
+        }
+    }
+
+```
 
 ---
 ## Protocol oriented approach
@@ -549,19 +602,25 @@ apiClient.fetch(
 ```
 
 ---
-# Pros
-* All request's configuration in one place - without reading multiple switches
-* It's easy to model similar requests and add new specialized requests
-* Queries can define their return types
-* We were able to extract whole API layer to framework and reused it in other project for the same client
-
----
 # Cons
 * Lack of namespacing.
 Solution: nested structs
 * It's possible to forget to implement extension for given combination of protocols and compiler won't warn us. Solution: unit tests
 * Some code repetition in extensions.
 Solution: extracting building body/parameters dictionaries to static methods or builder
+
+---
+# Pros
+* All request's configuration in one place - without reading multiple switches
+* It's easy to model similar requests and add new specialized requests
+* Queries can define their return types
+
+---
+
+# What we gained?
+* Better way to manage all commands and queries
+* Removed some dirty hacks
+* [UNEXPECTED] We were able to extract whole API layer to framework and reused it in other project for the same client
 
 ---
 # THANK YOU!
