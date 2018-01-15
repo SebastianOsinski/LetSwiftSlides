@@ -154,11 +154,13 @@ enum Query {
     }
 
     var parameters: [String: String]? {
-        ...
+        switch self {
+            ...
+        }
     }
 
     var urlRequest: URLRequest {
-        ...
+        ... // uses parameters and path to build urlRequest
     }
 }
 ```
@@ -184,7 +186,19 @@ enum Command {
 
     var path: String {
         switch self {
-            ...
+        case saveDraft:
+            return "save-draft"
+        case updateDraft:
+            return "update-draft"
+        case submitProject:
+            return "submit-project"
+        case approveProject:
+            return "approve-project"
+        case rejectProject:
+            return "reject-project"
+        .
+        .
+        .
         }
     }
 
@@ -201,7 +215,7 @@ enum Command {
     }
 
     var urlRequest: URLRequest {
-        ...
+        ... // uses path, method and body to build urlRequest
     }
 }
 ```
