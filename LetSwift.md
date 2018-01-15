@@ -331,9 +331,6 @@ extension Query {
 ```
 --- 
 ```swift
-typealias CommandSuccessCallback = () -> Void
-typealias FailureCallback = (Error) -> Void
-typealias QuerySuccessCallback<Entity> = (Entity) -> Void
 
 class ApiClient {
 
@@ -344,12 +341,10 @@ class ApiClient {
                    success: CommandSuccessCallback?, 
                    failure: FailureCallback?) {
         let task = session.dataTask(with: command.urlRequest) { (_, response, error) in
-            if 200...299 ~= (response as! HTTPURLResponse).statusCode {
+            if /* success */ {
                 success?()
-            } else if let error = error {
+            } else /* error */ {
                 failure?(error)
-            } else {
-                // additional error handling
             }
         }
 
@@ -360,19 +355,19 @@ class ApiClient {
 ---
 
 ```swift
+
+
+
+
     func execute<Q: Query, Result>(_ query: Q, 
                                    success: QuerySuccessCallback<Result>?, 
                                    failure: FailureCallback?) where Result == Q.Result {
-        let task = session.dataTask(with: query.urlRequest) { [jsonDecoder] (data, response, error) in
-            if let error = error {
+        let task = session.dataTask(with: query.urlRequest) { [jsonDecoder] (data, _, error) in
+            if /* error */ {
                 failure?(error)
             } else if let data = data {
-                do {
-                    let result = try jsonDecoder.decode(Result.self, from: data)
-                    success?(result)
-                } catch {
-                    failure?(error)
-                }
+                let result = try! jsonDecoder.decode(Result.self, from: data)
+                success?(result)
             } else {
                 // additional error handling ...
             }
@@ -427,13 +422,13 @@ protocol CommandBody {
     var json: JSON { get }
 }
 
-protocol BodyCommand: Command {
+protocol CommandWithBody: Command {
     associatedType Body: CommandBody
 
     var body: Body
 }
 
-extension BodyCommand {
+extension CommandWithBody {
     var body: JSON {
         return body.json
     }
@@ -464,7 +459,7 @@ struct AddSpeakerCommandBody: CommandBody {
 ## Usage - command for adding new speaker
 
 ```swift
-struct AddSpeakerCommand: BodyCommand {
+struct AddSpeakerCommand: CommandWithBody {
 
     static let path = "add_speaker"
     static let method = .post
