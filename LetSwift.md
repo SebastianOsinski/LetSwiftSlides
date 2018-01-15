@@ -13,9 +13,20 @@ theme: Next, 1
 ![inline 43%](tplx_logo.png)
 
 ---
+
 ## So... what's with the title?
 
 ---
+
+# CQRS
+## Command Query Responsibility Segregation
+---
+## Command
+Changes state, does not return anything
+## Query
+Returns some data, does not change state
+
+<!-- ---
 ## Usages of enums in Swift
 
 ---
@@ -34,27 +45,30 @@ theme: Next, 1
 ```swift
     indirect enum Tree<T> {
         case leaf(T)
-        case node(Tree<T>, Tree<T>)
+        case node(T, Tree<T>, Tree<T>)
         case empty
     }
 
     let tree: Tree<Int> = 
         .node(
+            0,
             .node(
-                .leaf(1),
-                .leaf(2)
+                1,
+                .leaf(2),
+                .leaf(3)
             ),
             .node(
+                4,
                 .empty,
-                .leaf(3)
+                .leaf(5)
             )
         )
-```
+``` -->
 
 ---
-## Modelling API requests with enums
+## Buzzword #1: Enums
 
----
+<!-- ---
 [.build-lists: false]
 * External library, e.g. Moya
 
@@ -101,20 +115,11 @@ enum NetworkRouter: URLRequestConvertible {
         ...
     }
 }
-```
+``` -->
 
 ---
 
-# CQRS
-## Command Query Responsibility Segregation
----
-## Command
-Changes state, does not return anything
 ## Query
-Returns some data, does not change state
-
----
-## First version - enums
 
 ```swift
 enum Query {
@@ -159,7 +164,7 @@ enum Query {
 ```
 
 ---
-## First version - enums
+## Command
 
 ```swift
 enum Command {
@@ -202,21 +207,19 @@ enum Command {
 ```
 
 ---
-# Pros
+## Pros
 
 * All commands / queries are namespaced and easy to find when they need to be used
 * Everything in one file
 
 ---
-# Cons
-
+## Cons
+[.build-lists: false]
 * Everything in one file :sob:
-* To get all info about request, we need to scroll through whole file and visit each `switch`
-* Doesn't scale well - enum grows with each endpoint added
-* Handling similar requests causes `switch`es to grow horizontally
-* You can't declare return type of Query
 
 ---
+
+## Cons
 [.build-lists: false]
 * To get all info about request, we need to scroll through whole file and visit each `switch`
 
@@ -249,6 +252,13 @@ enum Command {
 ```
 
 ---
+## Cons
+
+* Doesn't scale well - enum grows with each endpoint added
+
+---
+
+## Cons
 [.build-lists: false]
 * Handling similar requests causes `switch`es to grow horizontally
 
@@ -265,9 +275,14 @@ enum Command {
     }
 
 ```
+---
+
+## Cons
+[.build-lists: false]
+* You can't declare return type of Query
 
 ---
-## Protocol oriented approach
+## Buzzword #2: POP
 
 ---
 ## Key components:
