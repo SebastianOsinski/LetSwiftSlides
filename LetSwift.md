@@ -228,7 +228,6 @@ enum Command {
 
 ---
 ## Cons
-[.build-lists: false]
 * Everything in one file :sob:
 
 ---
@@ -267,7 +266,7 @@ enum Command {
 
 ---
 ## Cons
-
+[.build-lists: false]
 * Doesn't scale well - enum grows with each endpoint added
 
 ---
@@ -313,12 +312,12 @@ protocol Command {
     static var path: String { get }
     static var method: CommandMethod { get } // .post, .put, .delete, .patch
 
-    var body: JSON { get } // typealias JSON = [String: Any]
+    var bodyDict: JSON { get } // typealias JSON = [String: Any]
 }
 
 extension Command {
     var urlRequest: URLRequest {
-        // generates proper urlRequest using `path`, `method` and `body`
+        // generates proper urlRequest using `path`, `method` and `bodyDict`
         ...
     }
 }
@@ -402,7 +401,7 @@ protocol IdCommand: Command {
 }
 
 extension IdCommand {
-    var body: JSON {
+    var bodyDict: JSON {
         return ["id": id]
     }
 }
@@ -443,7 +442,7 @@ protocol CommandWithBody: Command {
 }
 
 extension CommandWithBody {
-    var body: JSON {
+    var bodyDict: JSON {
         return body.json
     }
 }
