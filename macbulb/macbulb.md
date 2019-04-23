@@ -1,14 +1,26 @@
 build-lists: true
-slidenumbers: true
 
-# MacBulb
-### How to add HomeKit compatibility to every* device
+## MacBulb
+### HomeKit integration adventures
+####<br>
 #### Sebastian Osiński
+
 ---
 # About me
 
 ### iOS Developer at
 ![inline 180%](dor_logo.png)
+
+---
+## Everything started with one angered developer...
+
+---
+## From this...
+![inline autoplay](samsung.MP4)
+
+---
+## To this!
+![inline autoplay](siri.MP4)
 
 ---
 # Creating HomeKit accessory
@@ -19,22 +31,18 @@ slidenumbers: true
 
 ---
 # Commercial
-
 ![inline](commercial.png)
 
 ---
 # Non-commercial
-
 ![inline](non-commercial.png)
 
 ---
 # HomeKit Accessory Protocol Specification
-
 ![inline](haps.png)
 
 ---
 # HomeKit Accessory Protocol Specification
-
 ![inline](time.gif)
 
 ---
@@ -72,8 +80,12 @@ Single functionality of an accessory. One accessory can have multiple services, 
 
 ---
 # Characteristic
-<br>
 Single property of a service. E.g. bulb has on/off characteristic and, among many others, brightness characteristic.
+
+[.build-lists: false]
+* Readable
+* Writable
+* Observable
 
 ---
 # Bridge
@@ -212,6 +224,7 @@ https://osinski.dev/talks
 ---
 # Sources
 
+[.build-lists: false]
 * [https://developer.apple.com/homekit](https://developer.apple.com/homekit/)
 * [https://homebridge.io](https://homebridge.io)
 * [https://github.com/KhaosT/HAP-NodeJS](https://github.com/KhaosT/HAP-NodeJS)
