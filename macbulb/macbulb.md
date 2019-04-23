@@ -217,9 +217,9 @@ setHue(level, callback) {
 
 ---
 # THANKS!
-<br>
-## This presentation can be found here:
-https://osinski.dev/talks
+#<br>
+## You can find this presentation here:
+[https://osinski.dev/talks](https://osinski.dev/talks)
 
 ---
 # Sources
